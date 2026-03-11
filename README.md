@@ -39,5 +39,3 @@ Create a `.env.local` file in the project root:
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
-
-> ⚠️ Never commit `.env.local` or use the Supabase service role key in the frontend.
