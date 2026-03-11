@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Project-specific exclusions
+auth_details.rtf
+theme-playground.html
+theme-playground.jsx
+screenshot*.png
+dark_screenshot.png
+.claude/settings.local.json
+Markdown Files/.obsidian/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -22,3 +31,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.vercel
+.env*.local
