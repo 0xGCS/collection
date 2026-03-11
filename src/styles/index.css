@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --primary-text: #0F172A;
+    --muted-text: #64748B;
+    --accent: #3B82F6;
+    --accent-foreground: #FFFFFF;
+    --border: #E2E8F0;
+    --table-header-bg: #F1F5F9;
+    --row-hover-bg: #F8FAFC;
+    --nav-border: #E2E8F0;
+    --badge-primary-bg: #EFF6FF;
+    --badge-primary-text: #3B82F6;
+    --badge-secondary-bg: #F0FDF4;
+    --badge-secondary-text: #16A34A;
+  }
+
+  .dark {
+    --background: #0F172A;
+    --card-bg: #1E293B;
+    --primary-text: #F1F5F9;
+    --muted-text: #94A3B8;
+    --accent: #818CF8;
+    --accent-foreground: #FFFFFF;
+    --border: #334155;
+    --table-header-bg: #1E293B;
+    --row-hover-bg: #263347;
+    --nav-border: #334155;
+    --badge-primary-bg: #312E81;
+    --badge-primary-text: #A5B4FC;
+    --badge-secondary-bg: #064E3B;
+    --badge-secondary-text: #6EE7B7;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--primary-text);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+  }
+}
