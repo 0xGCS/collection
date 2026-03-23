@@ -52,15 +52,18 @@ interface CollectionItem {
   community: string | null
   primary_category: string[] | null
   primary_subcategory: string[] | null
+  tags: string[] | null
+  prices: string | null
   created_at: string | null
 }
 
 type SortField = 'name' | 'created_at'
 type SortDir = 'asc' | 'desc'
+type GroupByField = 'subcategory' | 'tags' | 'prices' | null
 
 interface FilterRow {
   id: string
-  field: 'primary_subcategory' | 'links'
+  field: 'primary_subcategory' | 'tags' | 'prices' | 'links'
   operator: string
   values: string[]
 }
@@ -69,6 +72,28 @@ interface FilterRow {
 
 const CATEGORIES = ['Engineering', 'Artsy', 'Crypto', 'Investing', 'OSINT', 'Learning', 'Social', 'Misc', 'AI']
 const PAGE_SIZES = [25, 50, 100]
+
+// ── Price label / palette ─────────────────────────────────────────────────────
+
+const PRICE_LABELS: Record<string, string> = {
+  free: 'Free',
+  free_trial: 'Free Trial',
+  freemium: 'Freemium',
+  fund: 'Fund',
+  one_time_payment: 'One-time',
+  subscription: 'Subscription',
+  'varies by service': 'Varies',
+}
+
+const PRICE_PALETTE: Record<string, string> = {
+  free: 'bg-[#ECFDF5] text-[#065F46] dark:bg-[#064E3B] dark:text-[#6EE7B7]',
+  freemium: 'bg-[#EFF6FF] text-[#1D4ED8] dark:bg-[#1E3A5F] dark:text-[#93C5FD]',
+  free_trial: 'bg-[#F5F3FF] text-[#6D28D9] dark:bg-[#2E1B69] dark:text-[#C4B5FD]',
+  subscription: 'bg-[#FFF1F2] text-[#9F1239] dark:bg-[#4C0519] dark:text-[#FDA4AF]',
+  one_time_payment: 'bg-[#FFFBEB] text-[#92400E] dark:bg-[#451A03] dark:text-[#FCD34D]',
+  fund: 'bg-[#ECFEFF] text-[#155E75] dark:bg-[#164E63] dark:text-[#67E8F9]',
+  'varies by service': 'bg-[#F5F3FF] text-[#6D28D9] dark:bg-[#2E1B69] dark:text-[#C4B5FD]',
+}
 
 // ── Badge color palette ───────────────────────────────────────────────────────
 // 6 palettes: light bg / light text / dark bg / dark text
@@ -201,7 +226,7 @@ export default function CollectionTable() {
   const [sortDir, setSortDir] = useState<SortDir>('asc')
 
   // Grouping
-  const [groupBySubcategory, setGroupBySubcategory] = useState(false)
+  const [groupByField, setGroupByField] = useState<GroupByField>(null)
 
   // Pagination
   const [page, setPage] = useState(1)
@@ -242,11 +267,23 @@ export default function CollectionTable() {
     return () => clearTimeout(timer)
   }, [search])
 
-  // ── All subcategory values for filter dropdown ─────────────────────────────
+  // ── All subcategory / tag / price values for filter dropdowns ──────────────
 
   const allSubcategories = useMemo(() => {
     const set = new Set<string>()
     data.forEach((item) => item.primary_subcategory?.forEach((s) => set.add(s)))
+    return Array.from(set).sort()
+  }, [data])
+
+  const allTags = useMemo(() => {
+    const set = new Set<string>()
+    data.forEach((item) => item.tags?.forEach((t) => set.add(t)))
+    return Array.from(set).sort()
+  }, [data])
+
+  const allPrices = useMemo(() => {
+    const set = new Set<string>()
+    data.forEach((item) => { if (item.prices) set.add(item.prices) })
     return Array.from(set).sort()
   }, [data])
 
@@ -306,6 +343,57 @@ export default function CollectionTable() {
             break
           case 'is not empty':
             result = result.filter((item) => item.primary_subcategory && item.primary_subcategory.length > 0)
+            break
+        }
+      } else if (row.field === 'tags') {
+        switch (row.operator) {
+          case 'has any of':
+            if (row.values.length > 0)
+              result = result.filter((item) =>
+                item.tags?.some((t) => row.values.includes(t))
+              )
+            break
+          case 'has all of':
+            if (row.values.length > 0)
+              result = result.filter((item) =>
+                row.values.every((v) => item.tags?.includes(v))
+              )
+            break
+          case 'is exactly':
+            if (row.values.length > 0)
+              result = result.filter((item) => {
+                const ts = item.tags ?? []
+                return ts.length === row.values.length && row.values.every((v) => ts.includes(v))
+              })
+            break
+          case 'has none of':
+            if (row.values.length > 0)
+              result = result.filter((item) =>
+                !item.tags?.some((t) => row.values.includes(t))
+              )
+            break
+          case 'is empty':
+            result = result.filter((item) => !item.tags || item.tags.length === 0)
+            break
+          case 'is not empty':
+            result = result.filter((item) => item.tags && item.tags.length > 0)
+            break
+        }
+      } else if (row.field === 'prices') {
+        switch (row.operator) {
+          case 'is any of':
+            if (row.values.length > 0)
+              result = result.filter((item) => item.prices && row.values.includes(item.prices))
+            break
+          case 'is none of':
+            if (row.values.length > 0)
+              result = result.filter((item) => !item.prices || !row.values.includes(item.prices))
+            break
+          case 'is empty':
+            result = result.filter((item) => !item.prices)
+            break
+          case 'is not empty':
+            result = result.filter((item) => !!item.prices)
             break
         }
       } else if (row.field === 'links') {
@@ -368,17 +456,29 @@ export default function CollectionTable() {
   // ── Grouped data ───────────────────────────────────────────────────────────
 
   const groupedData = useMemo(() => {
-    if (!groupBySubcategory) return null
+    if (!groupByField) return null
     const groups: Record<string, CollectionItem[]> = {}
     for (const item of filteredData) {
-      const subs = item.primary_subcategory ?? ['Uncategorized']
-      for (const sub of subs) {
-        if (!groups[sub]) groups[sub] = []
-        groups[sub].push(item)
+      if (groupByField === 'subcategory') {
+        const keys = item.primary_subcategory ?? ['Uncategorized']
+        for (const key of keys) {
+          if (!groups[key]) groups[key] = []
+          groups[key].push(item)
+        }
+      } else if (groupByField === 'tags') {
+        const keys = item.tags && item.tags.length > 0 ? item.tags : ['Untagged']
+        for (const key of keys) {
+          if (!groups[key]) groups[key] = []
+          groups[key].push(item)
+        }
+      } else if (groupByField === 'prices') {
+        const key = item.prices ? (PRICE_LABELS[item.prices] ?? item.prices) : 'No Price'
+        if (!groups[key]) groups[key] = []
+        groups[key].push(item)
       }
     }
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
-  }, [filteredData, groupBySubcategory])
+  }, [filteredData, groupByField])
 
   // ── Pagination ─────────────────────────────────────────────────────────────
 
@@ -386,7 +486,7 @@ export default function CollectionTable() {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
   const startIdx = (page - 1) * pageSize
   const endIdx = Math.min(startIdx + pageSize, totalItems)
-  const paginatedData = groupBySubcategory ? filteredData : filteredData.slice(startIdx, endIdx)
+  const paginatedData = groupByField ? filteredData : filteredData.slice(startIdx, endIdx)
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -560,6 +660,29 @@ export default function CollectionTable() {
           ))}
         </div>
       </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-wrap gap-1">
+          {item.tags?.map((tag) => (
+            <Badge
+              key={tag}
+              variant="secondary"
+              className={getBadgePalette(tag)}
+            >
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        {item.prices && (
+          <Badge
+            variant="secondary"
+            className={`${PRICE_PALETTE[item.prices] ?? ''} border-0 text-xs font-medium`}
+          >
+            {PRICE_LABELS[item.prices] ?? item.prices}
+          </Badge>
+        )}
+      </td>
       <td className="px-4 py-3 text-sm text-muted-text whitespace-nowrap">
         {item.created_at ? new Date(item.created_at).toISOString().slice(0, 10) : '—'}
       </td>
@@ -624,7 +747,7 @@ export default function CollectionTable() {
           {/* Group */}
           <Popover open={groupOpen} onOpenChange={setGroupOpen}>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className={`text-sm ${groupBySubcategory ? 'text-accent' : 'text-muted-text'}`}>
+              <Button variant="ghost" size="sm" className={`text-sm ${groupByField ? 'text-accent' : 'text-muted-text'}`}>
                 <Group className="mr-1 h-4 w-4" />
                 Group
               </Button>
@@ -632,25 +755,28 @@ export default function CollectionTable() {
             <PopoverContent className="w-56 bg-card-bg" align="end">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-primary-text">Group by</p>
-                <Button
-                  variant={groupBySubcategory ? 'default' : 'outline'}
-                  size="sm"
-                  className="w-full justify-start"
-                  onClick={() => {
-                    setGroupBySubcategory(!groupBySubcategory)
-                    setCollapsedGroups(new Set())
-                    setGroupOpen(false)
-                  }}
-                >
-                  Primary Subcategory
-                </Button>
-                {groupBySubcategory && (
+                {(['subcategory', 'tags', 'prices'] as const).map((opt) => (
+                  <Button
+                    key={opt}
+                    variant={groupByField === opt ? 'default' : 'outline'}
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setGroupByField(groupByField === opt ? null : opt)
+                      setCollapsedGroups(new Set())
+                      setGroupOpen(false)
+                    }}
+                  >
+                    {opt === 'subcategory' ? 'Primary Subcategory' : opt === 'tags' ? 'Tags' : 'Prices'}
+                  </Button>
+                ))}
+                {groupByField && (
                   <Button
                     variant="ghost"
                     size="sm"
                     className="w-full justify-start text-destructive"
                     onClick={() => {
-                      setGroupBySubcategory(false)
+                      setGroupByField(null)
                       setGroupOpen(false)
                     }}
                   >
@@ -677,17 +803,19 @@ export default function CollectionTable() {
                     <span className="text-xs text-muted-text shrink-0">Where</span>
                     <Select
                       value={row.field}
-                      onValueChange={(v: string) => updateFilterRow(row.id, { field: v as FilterRow['field'], values: [] })}
+                      onValueChange={(v: string) => updateFilterRow(row.id, { field: v as FilterRow['field'], operator: v === 'prices' ? 'is any of' : 'has any of', values: [] })}
                     >
                       <SelectTrigger className="w-36 h-8 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="primary_subcategory">Primary Sub...</SelectItem>
+                        <SelectItem value="tags">Tags</SelectItem>
+                        <SelectItem value="prices">Prices</SelectItem>
                         <SelectItem value="links">Links</SelectItem>
                       </SelectContent>
                     </Select>
-                    {row.field === 'primary_subcategory' && (
+                    {(row.field === 'primary_subcategory' || row.field === 'tags') && (
                       <>
                         <Select
                           value={row.operator}
@@ -716,23 +844,75 @@ export default function CollectionTable() {
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-64 max-h-60 overflow-auto bg-card-bg p-2" align="start">
-                                {allSubcategories.map((sub) => (
+                                {(row.field === 'tags' ? allTags : allSubcategories).map((val) => (
                                   <label
-                                    key={sub}
+                                    key={val}
                                     className="flex items-center gap-2 px-2 py-1 text-xs text-primary-text cursor-pointer hover:bg-row-hover-bg rounded"
                                   >
                                     <input
                                       type="checkbox"
-                                      checked={row.values.includes(sub)}
+                                      checked={row.values.includes(val)}
                                       onChange={(e) => {
                                         const newVals = e.target.checked
-                                          ? [...row.values, sub]
-                                          : row.values.filter((v) => v !== sub)
+                                          ? [...row.values, val]
+                                          : row.values.filter((v) => v !== val)
                                         updateFilterRow(row.id, { values: newVals })
                                       }}
                                       className="rounded"
                                     />
-                                    {sub}
+                                    {val}
+                                  </label>
+                                ))}
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {row.field === 'prices' && (
+                      <>
+                        <Select
+                          value={row.operator}
+                          onValueChange={(v: string) => updateFilterRow(row.id, { operator: v })}
+                        >
+                          <SelectTrigger className="w-32 h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="is any of">is any of</SelectItem>
+                            <SelectItem value="is none of">is none of</SelectItem>
+                            <SelectItem value="is empty">is empty</SelectItem>
+                            <SelectItem value="is not empty">is not empty</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {!['is empty', 'is not empty'].includes(row.operator) && (
+                          <div className="flex-1">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-8 w-full justify-start text-xs font-normal">
+                                  {row.values.length > 0
+                                    ? `${row.values.length} selected`
+                                    : 'Select prices...'}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-52 bg-card-bg p-2" align="start">
+                                {allPrices.map((price) => (
+                                  <label
+                                    key={price}
+                                    className="flex items-center gap-2 px-2 py-1 text-xs text-primary-text cursor-pointer hover:bg-row-hover-bg rounded"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={row.values.includes(price)}
+                                      onChange={(e) => {
+                                        const newVals = e.target.checked
+                                          ? [...row.values, price]
+                                          : row.values.filter((v) => v !== price)
+                                        updateFilterRow(row.id, { values: newVals })
+                                      }}
+                                      className="rounded"
+                                    />
+                                    {PRICE_LABELS[price] ?? price}
                                   </label>
                                 ))}
                               </PopoverContent>
@@ -893,6 +1073,12 @@ export default function CollectionTable() {
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-text">
                 Primary Subcategory
               </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-text">
+                Tags
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-text">
+                Prices
+              </th>
               <th
                 className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-text cursor-pointer select-none"
                 onClick={() => handleSort('created_at')}
@@ -908,7 +1094,7 @@ export default function CollectionTable() {
             </tr>
           </thead>
           <tbody>
-            {groupBySubcategory && groupedData
+            {groupByField && groupedData
               ? groupedData.map(([group, items]) => (
                   <GroupSection
                     key={group}
@@ -920,9 +1106,9 @@ export default function CollectionTable() {
                   />
                 ))
               : paginatedData.map(renderRow)}
-            {!groupBySubcategory && paginatedData.length === 0 && (
+            {!groupByField && paginatedData.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-muted-text">
+                <td colSpan={7} className="px-4 py-12 text-center text-muted-text">
                   No results found.
                 </td>
               </tr>
@@ -932,7 +1118,7 @@ export default function CollectionTable() {
       </div>
 
       {/* Pagination */}
-      {!groupBySubcategory && (
+      {!groupByField && (
         <div className="mt-4 flex items-center justify-between text-sm text-muted-text">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -1028,7 +1214,7 @@ function GroupSection({
         className="cursor-pointer bg-table-header-bg hover:bg-row-hover-bg"
         onClick={onToggle}
       >
-        <td colSpan={5} className="px-4 py-2">
+        <td colSpan={7} className="px-4 py-2">
           <div className="flex items-center gap-2 text-sm font-semibold text-primary-text">
             {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
             {group}
