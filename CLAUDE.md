@@ -36,19 +36,6 @@ npm run lint         # Run ESLint
 
 ---
 
-## Environment Variables
-
-Create a `.env.local` file in the project root (never commit this file):
-
-```
-VITE_SUPABASE_URL=https://bgfxtzrkjskrjocwqazt.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZnh0enJranNrcmpvY3dxYXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyMjcyMzIsImV4cCI6MjA4NTgwMzIzMn0.3UUmWP7zbDd7dY-dj_h-d2t6zHC0Ia6t38YbWE3Gh_E
-```
-
-⚠️ Never use or commit the Supabase service role key in the frontend. It is only used in standalone Python scripts (`enrich_collection.py`, dead links checker).
-
----
-
 ## Project Structure
 
 ```
