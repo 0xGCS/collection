@@ -1,7 +1,14 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import Navbar from '@/components/layout/Navbar'
 import LandingPage from '@/components/LandingPage'
-import CollectionTable from '@/components/CollectionTable'
+import CollectionGrid from '@/components/CollectionGrid'
+import CollectionDetailPage from '@/components/CollectionDetailPage'
+
+// Redirect legacy detail URLs (/toooooooooools/:itemId) to the new /tools/item/:itemId path.
+function LegacyDetailRedirect() {
+  const { itemId } = useParams<{ itemId: string }>()
+  return <Navigate to={`/tools/item/${itemId}`} replace />
+}
 
 function TwitterPage() {
   return (
@@ -21,7 +28,13 @@ export default function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/toooooooooools" element={<CollectionTable />} />
+          {/* Legacy redirects: preserve old /toooooooooools links */}
+          <Route path="/toooooooooools" element={<Navigate to="/tools" replace />} />
+          <Route path="/toooooooooools/:itemId" element={<LegacyDetailRedirect />} />
+          {/* Tools */}
+          <Route path="/tools" element={<CollectionGrid />} />
+          <Route path="/tools/item/:itemId" element={<CollectionDetailPage />} />
+          <Route path="/tools/:category" element={<CollectionGrid />} />
           <Route path="/twitter" element={<TwitterPage />} />
         </Routes>
       </div>

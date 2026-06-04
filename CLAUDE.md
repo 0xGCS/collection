@@ -6,17 +6,17 @@
 
 ## Project Overview
 
-A personal compendium website listing curated tools, websites, and platforms. Two pages: a landing page and a data table powered by Supabase. GitHub repo: `https://github.com/0xGCS/collection`
+A personal compendium website listing curated tools, websites, and platforms. The current product surface includes a landing page, a filterable directory table, item detail pages, and a placeholder Twitter page. GitHub repo: `https://github.com/0xGCS/collection`
 
 ---
 
 ## Tech Stack
 
-- **Framework:** React 18 + TypeScript
+- **Framework:** React 19 + TypeScript
 - **Build tool:** Vite
 - **Styling:** Tailwind CSS (`darkMode: 'class'`)
 - **UI components:** shadcn/ui
-- **Routing:** React Router v6
+- **Routing:** React Router v7
 - **Database client:** `@supabase/supabase-js`
 - **Icons:** Lucide React (general UI) + inline SVGs for brand icons (Discord, Telegram, Reddit, X, LinkedIn, GitHub, YouTube)
 - **Font:** Space Grotesk (Google Fonts, weights 400/500/600/700)
@@ -34,6 +34,13 @@ npm run preview      # Preview production build locally
 npm run lint         # Run ESLint
 ```
 
+## Environment Variables
+
+```bash
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
 ---
 
 ## Project Structure
@@ -41,25 +48,46 @@ npm run lint         # Run ESLint
 ```
 src/
 ├── components/
-│   ├── ui/               # shadcn/ui primitives (Button, Badge, Input, etc.)
+│   ├── ui/                      # shadcn/ui primitives (Button, Badge, Input, etc.)
 │   ├── layout/
-│   │   └── Navbar.tsx    # Top navigation bar with light/dark toggle
+│   │   └── Navbar.tsx           # Top navigation bar with light/dark toggle
+│   ├── collection/             # Shared collection building blocks
+│   │   ├── types.ts             # CollectionItem type (source of truth)
+│   │   ├── badge-utils.ts       # Price labels/palettes + getBadgePalette()
+│   │   ├── CollectionBadges.tsx # CollectionTagList, CollectionPriceBadge
+│   │   └── CollectionLinks.tsx  # Brand/social icon links + community detection
 │   ├── LandingPage.tsx
-│   └── CollectionTable.tsx
+│   ├── CollectionGrid.tsx       # Card-grid directory (category pages + filters)
+│   └── CollectionDetailPage.tsx # Two-column item detail page
 ├── lib/
-│   ├── supabase.ts       # Supabase client initialisation
-│   └── utils.ts          # cn() helper and shared utilities
+│   ├── supabase.ts              # Supabase client initialisation
+│   ├── collection.ts            # Data fetchers + pickRelatedItems()
+│   └── utils.ts                 # cn() helper and shared utilities
 ├── styles/
-│   └── index.css         # Tailwind directives + Space Grotesk import
-├── App.tsx               # Route definitions
+│   └── index.css                # Tailwind directives + Space Grotesk import
+├── App.tsx                      # Routes (see below)
 └── main.tsx
 ```
+
+**Routes** (React Router v7, in `App.tsx`):
+
+| Path | Component | Notes |
+|---|---|---|
+| `/` | `LandingPage` | |
+| `/tools` | `CollectionGrid` | All items, no category filter |
+| `/tools/:category` | `CollectionGrid` | Pre-filtered by category slug (e.g. `/tools/ai`) |
+| `/tools/item/:itemId` | `CollectionDetailPage` | `/item/` prefix avoids collision with category slugs |
+| `/twitter` | TwitterPage | Renders "Coming Soon" |
+| `/toooooooooools` → `/tools` | redirect | Legacy link preservation |
+| `/toooooooooools/:itemId` → `/tools/item/:itemId` | redirect | Legacy detail-link preservation |
+
+> The navbar link points to `/tools` but the **display label stays `Toooooooooools`**.
 
 ---
 
 ## Code Conventions
 
-- **File naming:** PascalCase for components (`CollectionTable.tsx`), camelCase for utilities (`supabase.ts`)
+- **File naming:** PascalCase for components (`CollectionGrid.tsx`), camelCase for utilities (`supabase.ts`)
 - **Styling:** Tailwind utility classes only — no plain CSS modules or inline styles
 - **Components:** Functional components with TypeScript props interfaces; no class components
 - **Imports:** Use `@/` path alias for `src/` (configured in `vite.config.ts` and `tsconfig.json`)

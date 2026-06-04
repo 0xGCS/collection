@@ -11,8 +11,13 @@ function getInitialTheme(): 'light' | 'dark' {
 
 const pageNames: Record<string, string> = {
   '/': 'Home',
-  '/toooooooooools': 'Toooooooooools',
+  '/tools': 'Toooooooooools',
   '/twitter': 'Twitter',
+}
+
+function getBreadcrumbPath(pathname: string) {
+  if (pathname === '/tools' || pathname.startsWith('/tools/')) return '/tools'
+  return pathname
 }
 
 export default function Navbar() {
@@ -33,8 +38,9 @@ export default function Navbar() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))
   }
 
-  const currentPage = pageNames[location.pathname] ?? 'Home'
-  const isHome = location.pathname === '/'
+  const breadcrumbPath = getBreadcrumbPath(location.pathname)
+  const currentPage = pageNames[breadcrumbPath] ?? 'Home'
+  const isHome = breadcrumbPath === '/'
 
   return (
     <nav className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-nav-border bg-card-bg px-6">
@@ -51,11 +57,11 @@ export default function Navbar() {
       </div>
 
       <div className="flex items-center gap-2">
-        <Link to="/toooooooooools">
+        <Link to="/tools">
           <Button
             variant="ghost"
             size="sm"
-            className={`text-sm ${location.pathname === '/toooooooooools' ? 'text-accent' : 'text-muted-text hover:text-primary-text'}`}
+            className={`text-sm ${breadcrumbPath === '/tools' ? 'text-accent' : 'text-muted-text hover:text-primary-text'}`}
           >
             Toooooooooools
           </Button>

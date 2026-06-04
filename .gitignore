@@ -14,6 +14,9 @@ dist-ssr
 
 # Project-specific exclusions
 auth_details.rtf
+collection_rows.csv
+*.xlsx
+~$*.xlsx
 theme-playground.html
 theme-playground.jsx
 screenshot*.png
