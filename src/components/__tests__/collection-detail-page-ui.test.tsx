@@ -54,7 +54,7 @@ describe('CollectionDetailPage UI', () => {
     expect(screen.getByText('Free Trial')).toBeInTheDocument()
     expect(screen.getByText('Pricing')).toBeInTheDocument()
     expect(screen.getByText('Date Added')).toBeInTheDocument()
-    expect(screen.getByText('2026-01-01')).toBeInTheDocument()
+    expect(screen.getByText('Jan 1, 2026')).toBeInTheDocument()
     expect(screen.getByTitle('Website')).toHaveAttribute('href', sampleItem.url)
     expect(screen.getByTitle('GitHub')).toHaveAttribute('href', sampleItem.github)
     expect(screen.getByTitle('Discord')).toHaveAttribute('href', sampleItem.community)

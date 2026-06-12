@@ -7,24 +7,11 @@ import { CollectionPriceBadge, CollectionTagList } from '@/components/collection
 import { Badge } from '@/components/ui/badge'
 import type { CollectionItem } from '@/components/collection/types'
 import * as collectionModule from '@/lib/collection'
+import { formatDate } from '@/lib/utils'
 
 const fetchCollectionItemById = collectionModule.fetchCollectionItemById
 const fetchCollectionItems = collectionModule.fetchCollectionItems ?? (async () => [])
 const pickRelatedItems = collectionModule.pickRelatedItems ?? (() => [])
-
-function formatDate(date: string | null) {
-  if (!date) {
-    return '—'
-  }
-
-  const parsed = new Date(date)
-
-  if (Number.isNaN(parsed.getTime())) {
-    return '—'
-  }
-
-  return parsed.toISOString().slice(0, 10)
-}
 
 function getRelatedItemContext(item: CollectionItem) {
   const description = item.description?.trim()
@@ -284,7 +271,7 @@ export default function CollectionDetailPage() {
           )}
 
           <SidebarCard label="Date Added">
-            <p className="text-sm text-primary-text">{formatDate(item.created_at)}</p>
+            <p className="text-sm text-primary-text">{formatDate(item.created_at) ?? '—'}</p>
           </SidebarCard>
 
           {(item.primary_category?.length || item.primary_subcategory?.length) && (

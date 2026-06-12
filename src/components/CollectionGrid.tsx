@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, FilterX, Search } from 'lucide-react'
 
 import { supabase } from '@/lib/supabase'
+import { formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -131,8 +132,7 @@ function LogoAvatar({ item }: { item: CollectionItem }) {
 }
 
 function CollectionCard({ item }: { item: CollectionItem }) {
-  const date = item.created_at ? new Date(item.created_at) : null
-  const dateLabel = date && !Number.isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : null
+  const dateLabel = formatDate(item.created_at)
 
   // Stretched-link pattern: an overlay <Link> covers the card while the social
   // icons remain separate (pointer-events-auto) anchors — avoids nesting <a> in <a>.
@@ -448,6 +448,14 @@ export default function CollectionGrid() {
       <div className="relative mb-3">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-text" />
         <Input
+          type="search"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          data-1p-ignore
+          data-lpignore="true"
+          data-form-type="other"
           placeholder="Search by name or description..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
