@@ -30,6 +30,10 @@ const sampleItem: CollectionItem = {
   tags: ['Featured', 'Agents'],
   prices: 'free_trial',
   pricing: 'Contact sales for enterprise plans.',
+  features_v2: [
+    { label: 'Massive UI/UX Database', description: 'Access 250,000+ real-world app screens.' },
+    { label: 'AI Coding Agent Integration', description: 'Browse UI patterns through MCP.' },
+  ],
   created_at: '2026-01-01T00:00:00.000Z',
 }
 
@@ -53,6 +57,10 @@ describe('CollectionDetailPage UI', () => {
     expect(screen.getByText('Featured')).toBeInTheDocument()
     expect(screen.getByText('Free Trial')).toBeInTheDocument()
     expect(screen.getByText('Pricing')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Key Features' })).toBeInTheDocument()
+    expect(screen.getByText('Massive UI/UX Database')).toBeInTheDocument()
+    expect(screen.getByText(/Access 250,000\+ real-world app screens\./)).toBeInTheDocument()
+    expect(screen.getByText('AI Coding Agent Integration')).toBeInTheDocument()
     expect(screen.getByText('Date Added')).toBeInTheDocument()
     expect(screen.getByText('Jan 1, 2026')).toBeInTheDocument()
     expect(screen.getByTitle('Website')).toHaveAttribute('href', sampleItem.url)

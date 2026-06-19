@@ -5,7 +5,7 @@ import { Link, useParams } from 'react-router-dom'
 import { CollectionLinks } from '@/components/collection/CollectionLinks'
 import { CollectionPriceBadge, CollectionTagList } from '@/components/collection/CollectionBadges'
 import { Badge } from '@/components/ui/badge'
-import type { CollectionItem } from '@/components/collection/types'
+import type { CollectionFeature, CollectionItem } from '@/components/collection/types'
 import * as collectionModule from '@/lib/collection'
 import { formatDate } from '@/lib/utils'
 
@@ -31,22 +31,19 @@ function getRelatedItemContext(item: CollectionItem) {
   return 'Explore this tool in the collection.'
 }
 
-function parseFeatures(item: CollectionItem): string[] {
-  // `features` is not part of the schema today; support it gracefully if present.
-  const raw = (item as CollectionItem & { features?: unknown }).features
+function parseFeatures(item: CollectionItem): CollectionFeature[] {
+  const raw = item.features_v2
 
-  if (Array.isArray(raw)) {
-    return raw.map((f) => String(f).trim()).filter(Boolean)
+  if (!Array.isArray(raw)) {
+    return []
   }
 
-  if (typeof raw === 'string') {
-    return raw
-      .split(/\r?\n|•|;/)
-      .map((f) => f.trim())
-      .filter(Boolean)
-  }
-
-  return []
+  return raw
+    .map((feature) => ({
+      label: typeof feature?.label === 'string' ? feature.label.trim() : '',
+      description: typeof feature?.description === 'string' ? feature.description.trim() : '',
+    }))
+    .filter((feature) => feature.label || feature.description)
 }
 
 function SidebarCard({ label, children }: { label: string; children: React.ReactNode }) {
@@ -252,9 +249,15 @@ export default function CollectionDetailPage() {
             {features.length > 0 && (
               <>
                 <h2 className="mb-2 mt-6 text-lg font-semibold text-primary-text">Key Features</h2>
-                <ul className="list-inside list-disc space-y-1 text-sm text-muted-text">
+                <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted-text">
                   {features.map((feature) => (
-                    <li key={feature}>{feature}</li>
+                    <li key={feature.label || feature.description}>
+                      {feature.label && (
+                        <span className="font-semibold text-primary-text">{feature.label}</span>
+                      )}
+                      {feature.label && feature.description ? ' — ' : ''}
+                      {feature.description}
+                    </li>
                   ))}
                 </ul>
               </>
