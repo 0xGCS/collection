@@ -3,6 +3,20 @@ export interface CollectionFeature {
   description: string
 }
 
+export interface Topic {
+  id?: string
+  name: string
+  slug: string
+}
+
+export interface Category {
+  id: string
+  name: string
+  slug: string
+  topicSlug: string
+  topicName: string
+}
+
 export interface CollectionItem {
   id: string
   name: string
@@ -14,8 +28,8 @@ export interface CollectionItem {
   github: string | null
   youtube: string | null
   community: string | null
-  primary_category: string[] | null
-  primary_subcategory: string[] | null
+  topics: Topic[]
+  categories: Category[]
   tags: string[] | null
   prices: string | null
   pricing: string | null

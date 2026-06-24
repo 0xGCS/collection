@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, FilterX, Search } from 'lucide-react'
 
-import { supabase } from '@/lib/supabase'
+import { fetchCollectionItems, fetchTopics } from '@/lib/collection'
 import { formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,27 +21,29 @@ import {
 import { CollectionLinks } from '@/components/collection/CollectionLinks'
 import { CollectionPriceBadge, CollectionTagList } from '@/components/collection/CollectionBadges'
 import { PRICE_LABELS } from '@/components/collection/badge-utils'
-import type { CollectionItem } from '@/components/collection/types'
+import type { CollectionItem, Topic } from '@/components/collection/types'
 
-// ── Categories ───────────────────────────────────────────────────────────────
+// ── Topics ─────────────────────────────────────────────────────────────────────
 
-interface CategoryDef {
-  name: string
-  slug: string
-  icon: string
+// Icons aren't stored in the DB, so map them by topic slug here (fallback for new topics).
+const TOPIC_ICONS: Record<string, string> = {
+  ai: '🤖',
+  crypto: '₿',
+  design: '🎨',
+  directories: '🗂️',
+  engineering: '⚙️',
+  investing: '📈',
+  learning: '📚',
+  media: '🎬',
+  misc: '🗂️',
+  osint: '🔍',
+  productivity: '⚡',
+  social: '💬',
 }
 
-const CATEGORIES: CategoryDef[] = [
-  { name: 'Engineering', slug: 'engineering', icon: '⚙️' },
-  { name: 'Artsy', slug: 'artsy', icon: '🎨' },
-  { name: 'Crypto', slug: 'crypto', icon: '₿' },
-  { name: 'Investing', slug: 'investing', icon: '📈' },
-  { name: 'OSINT', slug: 'osint', icon: '🔍' },
-  { name: 'Learning', slug: 'learning', icon: '📚' },
-  { name: 'Social', slug: 'social', icon: '💬' },
-  { name: 'Misc', slug: 'misc', icon: '🗂️' },
-  { name: 'AI', slug: 'ai', icon: '🤖' },
-]
+function topicIcon(slug: string) {
+  return TOPIC_ICONS[slug] ?? '🔖'
+}
 
 const PAGE_SIZES = [25, 50, 100]
 
@@ -188,21 +190,17 @@ function SkeletonCard() {
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function CollectionGrid() {
-  const { category: categorySlug } = useParams<{ category?: string }>()
+  const { category: topicSlugParam } = useParams<{ category?: string }>()
   const navigate = useNavigate()
 
-  const activeCategory = useMemo(
-    () => CATEGORIES.find((c) => c.slug === categorySlug?.toLowerCase()) ?? null,
-    [categorySlug],
-  )
-
   const [data, setData] = useState<CollectionItem[]>([])
+  const [topics, setTopics] = useState<Topic[]>([])
   const [loading, setLoading] = useState(true)
 
   // Filters
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedPrices, setSelectedPrices] = useState<string[]>([])
   const [selectedLinkTypes, setSelectedLinkTypes] = useState<string[]>([])
@@ -212,27 +210,24 @@ export default function CollectionGrid() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
 
+  const activeTopic = useMemo(
+    () => topics.find((t) => t.slug === topicSlugParam?.toLowerCase()) ?? null,
+    [topics, topicSlugParam],
+  )
+
   // ── Fetch ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     let cancelled = false
-    async function fetchData() {
+    async function load() {
       setLoading(true)
-      const { data: rows, error } = await supabase
-        .from('collection')
-        .select('*')
-        .order('created_at', { ascending: false })
-
+      const [items, topicList] = await Promise.all([fetchCollectionItems(), fetchTopics()])
       if (cancelled) return
-
-      if (error) {
-        console.error('Supabase error:', error)
-      } else {
-        setData(rows ?? [])
-      }
+      setData(items)
+      setTopics(topicList)
       setLoading(false)
     }
-    fetchData()
+    load()
     return () => {
       cancelled = true
     }
@@ -249,8 +244,8 @@ export default function CollectionGrid() {
   }, [search])
 
   // Filter setters that also reset pagination to page 1.
-  const setSubcategoriesAndReset = (next: string[]) => {
-    setSelectedSubcategories(next)
+  const setCategoriesAndReset = (next: string[]) => {
+    setSelectedCategories(next)
     setPage(1)
   }
   const setTagsAndReset = (next: string[]) => {
@@ -270,13 +265,35 @@ export default function CollectionGrid() {
     setPage(1)
   }
 
-  // ── Option lists ───────────────────────────────────────────────────────────
+  // ── Topic pills (only topics present in the loaded data) ───────────────────
 
-  const allSubcategories = useMemo(() => {
-    const set = new Set<string>()
-    data.forEach((item) => item.primary_subcategory?.forEach((s) => set.add(s)))
-    return Array.from(set).sort()
-  }, [data])
+  const visibleTopics = useMemo(() => {
+    const present = new Set<string>()
+    data.forEach((item) => item.topics.forEach((t) => present.add(t.slug)))
+    return topics.filter((t) => present.has(t.slug))
+  }, [data, topics])
+
+  // ── Category options (scoped to active topic; labelled by topic on "All") ──
+
+  const categoryOptions = useMemo(() => {
+    const bySlug = new Map<string, string>()
+    data.forEach((item) =>
+      item.categories.forEach((c) => {
+        if (activeTopic && c.topicSlug !== activeTopic.slug) return
+        if (!bySlug.has(c.slug)) {
+          bySlug.set(c.slug, activeTopic ? c.name : `${c.topicName} · ${c.name}`)
+        }
+      }),
+    )
+    return Array.from(bySlug.entries())
+      .map(([slug, label]) => ({ slug, label }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [data, activeTopic])
+
+  const categoryLabel = useMemo(() => {
+    const map = new Map(categoryOptions.map((o) => [o.slug, o.label]))
+    return (slug: string) => map.get(slug) ?? slug
+  }, [categoryOptions])
 
   const allTags = useMemo(() => {
     const set = new Set<string>()
@@ -297,8 +314,8 @@ export default function CollectionGrid() {
   const filteredData = useMemo(() => {
     let result = data
 
-    if (activeCategory) {
-      result = result.filter((item) => item.primary_category?.includes(activeCategory.name))
+    if (activeTopic) {
+      result = result.filter((item) => item.topics.some((t) => t.slug === activeTopic.slug))
     }
 
     if (debouncedSearch) {
@@ -310,10 +327,8 @@ export default function CollectionGrid() {
       )
     }
 
-    if (selectedSubcategories.length > 0) {
-      result = result.filter((item) =>
-        item.primary_subcategory?.some((s) => selectedSubcategories.includes(s)),
-      )
+    if (selectedCategories.length > 0) {
+      result = result.filter((item) => item.categories.some((c) => selectedCategories.includes(c.slug)))
     }
 
     if (selectedTags.length > 0) {
@@ -367,9 +382,9 @@ export default function CollectionGrid() {
     return result
   }, [
     data,
-    activeCategory,
+    activeTopic,
     debouncedSearch,
-    selectedSubcategories,
+    selectedCategories,
     selectedTags,
     selectedPrices,
     selectedLinkTypes,
@@ -389,7 +404,7 @@ export default function CollectionGrid() {
 
   const hasActiveFilters =
     Boolean(debouncedSearch) ||
-    selectedSubcategories.length > 0 ||
+    selectedCategories.length > 0 ||
     selectedTags.length > 0 ||
     selectedPrices.length > 0 ||
     selectedLinkTypes.length > 0
@@ -397,15 +412,16 @@ export default function CollectionGrid() {
   const clearAllFilters = () => {
     setSearch('')
     setDebouncedSearch('')
-    setSelectedSubcategories([])
+    setSelectedCategories([])
     setSelectedTags([])
     setSelectedPrices([])
     setSelectedLinkTypes([])
     setPage(1)
   }
 
-  const goToCategory = (slug: string | null) => {
+  const goToTopic = (slug: string | null) => {
     navigate(slug ? `/tools/${slug}` : '/tools')
+    setSelectedCategories([])
     setPage(1)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -414,32 +430,32 @@ export default function CollectionGrid() {
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-6">
-      {/* Category pills */}
+      {/* Topic pills */}
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={() => goToCategory(null)}
+          onClick={() => goToTopic(null)}
           className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-            !activeCategory
+            !activeTopic
               ? 'bg-blue-600 text-white'
               : 'border border-border bg-card-bg text-muted-text hover:bg-muted'
           }`}
         >
           All
         </button>
-        {CATEGORIES.map((cat) => (
+        {visibleTopics.map((topic) => (
           <button
-            key={cat.slug}
+            key={topic.slug}
             type="button"
-            onClick={() => goToCategory(cat.slug)}
+            onClick={() => goToTopic(topic.slug)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              activeCategory?.slug === cat.slug
+              activeTopic?.slug === topic.slug
                 ? 'bg-blue-600 text-white'
                 : 'border border-border bg-card-bg text-muted-text hover:bg-muted'
             }`}
           >
-            <span className="mr-1">{cat.icon}</span>
-            {cat.name}
+            <span className="mr-1">{topicIcon(topic.slug)}</span>
+            {topic.name}
           </button>
         ))}
       </div>
@@ -466,10 +482,12 @@ export default function CollectionGrid() {
       {/* Filter dropdowns */}
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <MultiSelect
-          label="Subcategory"
-          options={allSubcategories}
-          selected={selectedSubcategories}
-          onChange={setSubcategoriesAndReset}
+          label="Category"
+          options={categoryOptions.map((o) => o.slug)}
+          selected={selectedCategories}
+          onChange={setCategoriesAndReset}
+          renderOption={categoryLabel}
+          width="w-64"
         />
         <MultiSelect label="Tags" options={allTags} selected={selectedTags} onChange={setTagsAndReset} />
         <MultiSelect

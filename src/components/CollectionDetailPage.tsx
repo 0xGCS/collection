@@ -20,12 +20,12 @@ function getRelatedItemContext(item: CollectionItem) {
     return description
   }
 
-  if (item.primary_subcategory?.length) {
-    return item.primary_subcategory.join(', ')
+  if (item.categories.length) {
+    return item.categories.map((c) => c.name).join(', ')
   }
 
-  if (item.primary_category?.length) {
-    return item.primary_category.join(', ')
+  if (item.topics.length) {
+    return item.topics.map((t) => t.name).join(', ')
   }
 
   return 'Explore this tool in the collection.'
@@ -277,12 +277,14 @@ export default function CollectionDetailPage() {
             <p className="text-sm text-primary-text">{formatDate(item.created_at) ?? '—'}</p>
           </SidebarCard>
 
-          {(item.primary_category?.length || item.primary_subcategory?.length) && (
+          {(item.topics.length > 0 || item.categories.length > 0) && (
             <SidebarCard label="Category">
               <div className="flex flex-col gap-2">
-                {item.primary_category?.length ? <CollectionTagList items={item.primary_category} /> : null}
-                {item.primary_subcategory?.length ? (
-                  <CollectionTagList items={item.primary_subcategory} />
+                {item.topics.length > 0 ? (
+                  <CollectionTagList items={item.topics.map((t) => t.name)} />
+                ) : null}
+                {item.categories.length > 0 ? (
+                  <CollectionTagList items={item.categories.map((c) => c.name)} />
                 ) : null}
               </div>
             </SidebarCard>
@@ -327,9 +329,9 @@ export default function CollectionDetailPage() {
                     </p>
                   </div>
 
-                  {relatedItem.primary_subcategory?.[0] ? (
+                  {relatedItem.categories[0] ? (
                     <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-primary-text">
-                      {relatedItem.primary_subcategory[0]}
+                      {relatedItem.categories[0].name}
                     </span>
                   ) : null}
                 </div>

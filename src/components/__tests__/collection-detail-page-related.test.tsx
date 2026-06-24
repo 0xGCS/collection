@@ -28,8 +28,8 @@ function createItem(overrides: Partial<CollectionItem>): CollectionItem {
     github: null,
     youtube: null,
     community: null,
-    primary_category: null,
-    primary_subcategory: null,
+    topics: [],
+    categories: [],
     tags: null,
     prices: null,
     pricing: null,
@@ -49,8 +49,8 @@ describe('CollectionDetailPage related items', () => {
       id: 'current-tool',
       name: 'Current Tool',
       description: 'Primary detail page item.',
-      primary_category: ['AI'],
-      primary_subcategory: ['Agents'],
+      topics: [{ name: 'AI', slug: 'ai' }],
+      categories: [{ id: 'ai-agents', name: 'Agents', slug: 'ai-agents', topicSlug: 'ai', topicName: 'AI' }],
     })
 
     const relatedItems = [
@@ -58,13 +58,15 @@ describe('CollectionDetailPage related items', () => {
         id: 'related-one',
         name: 'Related One',
         description: 'Helpful context for the first related tool.',
-        primary_subcategory: ['Agents'],
+        categories: [{ id: 'ai-agents', name: 'Agents', slug: 'ai-agents', topicSlug: 'ai', topicName: 'AI' }],
       }),
       createItem({
         id: 'related-two',
         name: 'Related Two',
         description: null,
-        primary_subcategory: ['Workflows'],
+        categories: [
+          { id: 'ai-workflows', name: 'Workflows', slug: 'ai-workflows', topicSlug: 'ai', topicName: 'AI' },
+        ],
       }),
     ]
 

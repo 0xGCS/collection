@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { pickRelatedItems } from '@/lib/collection'
-import type { CollectionItem } from '@/components/collection/types'
+import type { Category, CollectionItem, Topic } from '@/components/collection/types'
+
+function topic(slug: string, name: string): Topic {
+  return { slug, name }
+}
+
+function cat(slug: string, name: string, topicSlug: string, topicName: string): Category {
+  return { id: slug, slug, name, topicSlug, topicName }
+}
 
 function createItem(overrides: Partial<CollectionItem>): CollectionItem {
   return {
@@ -14,8 +22,8 @@ function createItem(overrides: Partial<CollectionItem>): CollectionItem {
     github: null,
     youtube: null,
     community: null,
-    primary_category: null,
-    primary_subcategory: null,
+    topics: [],
+    categories: [],
     tags: null,
     prices: null,
     pricing: null,
@@ -26,34 +34,34 @@ function createItem(overrides: Partial<CollectionItem>): CollectionItem {
 }
 
 describe('pickRelatedItems', () => {
-  it('prefers same subcategory matches before same category matches', () => {
+  it('prefers same category matches before same topic matches', () => {
     const current = createItem({
       id: 'current',
-      primary_category: ['AI'],
-      primary_subcategory: ['Agents'],
+      topics: [topic('ai', 'AI')],
+      categories: [cat('ai-agents', 'Agents', 'ai', 'AI')],
     })
 
-    const sameCategoryOnly = createItem({
+    const sameTopicOnly = createItem({
+      id: 'same-topic',
+      topics: [topic('ai', 'AI')],
+      categories: [cat('ai-search', 'Search', 'ai', 'AI')],
+    })
+
+    const sameCategory = createItem({
       id: 'same-category',
-      primary_category: ['AI'],
-      primary_subcategory: ['Search'],
-    })
-
-    const sameSubcategory = createItem({
-      id: 'same-subcategory',
-      primary_category: ['Infra'],
-      primary_subcategory: ['Agents'],
+      topics: [topic('ai', 'AI')],
+      categories: [cat('ai-agents', 'Agents', 'ai', 'AI')],
     })
 
     const unrelated = createItem({
       id: 'unrelated',
-      primary_category: ['Design'],
-      primary_subcategory: ['UI'],
+      topics: [topic('design', 'Design')],
+      categories: [cat('design-ui', 'UI', 'design', 'Design')],
     })
 
-    const related = pickRelatedItems(current, [current, sameCategoryOnly, sameSubcategory, unrelated], 2)
+    const related = pickRelatedItems(current, [current, sameTopicOnly, sameCategory, unrelated], 2)
 
     expect(related).toHaveLength(2)
-    expect(related.map((item) => item.id)).toEqual(['same-subcategory', 'same-category'])
+    expect(related.map((item) => item.id)).toEqual(['same-category', 'same-topic'])
   })
 })

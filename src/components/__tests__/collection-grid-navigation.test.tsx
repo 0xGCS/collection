@@ -4,18 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import CollectionGrid from '@/components/CollectionGrid'
 import type { CollectionItem } from '@/components/collection/types'
+import * as collectionModule from '@/lib/collection'
 
-const { selectMock, orderMock, fromMock } = vi.hoisted(() => ({
-  selectMock: vi.fn(),
-  orderMock: vi.fn(),
-  fromMock: vi.fn(),
+vi.mock('@/lib/collection', () => ({
+  fetchCollectionItems: vi.fn(),
+  fetchTopics: vi.fn(),
 }))
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: fromMock,
-  },
-}))
+const mockedFetchItems = vi.mocked(collectionModule.fetchCollectionItems)
+const mockedFetchTopics = vi.mocked(collectionModule.fetchTopics)
 
 function createItem(overrides: Partial<CollectionItem> = {}): CollectionItem {
   return {
@@ -29,8 +26,10 @@ function createItem(overrides: Partial<CollectionItem> = {}): CollectionItem {
     github: overrides.github ?? null,
     youtube: overrides.youtube ?? null,
     community: overrides.community ?? null,
-    primary_category: overrides.primary_category ?? ['AI'],
-    primary_subcategory: overrides.primary_subcategory ?? ['Agents'],
+    topics: overrides.topics ?? [{ name: 'AI', slug: 'ai' }],
+    categories: overrides.categories ?? [
+      { id: 'ai-agents', name: 'Agents', slug: 'ai-agents', topicSlug: 'ai', topicName: 'AI' },
+    ],
     tags: overrides.tags ?? ['Featured'],
     prices: overrides.prices ?? 'free',
     pricing: overrides.pricing ?? null,
@@ -42,19 +41,8 @@ function createItem(overrides: Partial<CollectionItem> = {}): CollectionItem {
 describe('CollectionGrid navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
-    orderMock.mockResolvedValue({
-      data: [createItem()],
-      error: null,
-    })
-
-    selectMock.mockReturnValue({
-      order: orderMock,
-    })
-
-    fromMock.mockReturnValue({
-      select: selectMock,
-    })
+    mockedFetchItems.mockResolvedValue([createItem()])
+    mockedFetchTopics.mockResolvedValue([{ name: 'AI', slug: 'ai' }])
   })
 
   it('links each card to the internal detail route', async () => {

@@ -109,19 +109,25 @@ Full token tables are in `PRD.md §10.2`.
 
 ## Supabase Notes
 
-- **Table:** `public.collection` (528 rows, read-only from the frontend)
-- **RLS:** Enable RLS on `collection` with a public `SELECT` policy for the `anon` role before deploying
-- **Arrays:** `primary_category` and `primary_subcategory` are `text[]` — use Postgres array operators for filtering (e.g., `@>`, `&&`)
-- **Dead links table:** `public.dead_links` — identical schema to `collection`; never write to it from the frontend
+- **Main table:** `public.collection` (~630 rows, read-only from the frontend)
+- **Taxonomy is normalized** into `product → category → topic`:
+  - `public.topics` — broad subject areas (`id, name, slug`). 12 topics.
+  - `public.categories` — specific product types (`id, topic_id, name, slug`); each category belongs to exactly one topic. Slugs are topic-prefixed (e.g. `crypto-infrastructure` vs `engineering-infrastructure`) because names repeat across topics.
+  - `public.product_categories` — junction (`product_id, category_id`), composite PK. A product has 1–3 categories; its topics are derived from those categories (can span multiple topics).
+- **RLS:** every frontend-read table (`collection`, `topics`, `categories`, `product_categories`) needs a public `SELECT` policy for the `anon` role. Without it the anon client gets empty data.
+- **Data access:** the frontend reads via `src/lib/collection.ts`, which embeds the junction with a PostgREST nested select (`*, product_categories ( categories ( …, topics (…) ) )`) and `normalizeItem()` flattens it into `item.topics[]` and `item.categories[]` on `CollectionItem`.
+- **Legacy columns:** `collection.primary_category` / `primary_subcategory` (`text[]`) are deprecated — kept until the normalized UI is validated in prod, then dropped (same phased pattern as `features` → `features_v2`). The UI no longer reads them.
+- **Tags:** `collection.tags` (`text[]`) stays on the product — flexible attributes (e.g. `open-source`, `api`, `freemium`).
+- **Dead links table:** `public.dead_links` — never write to it from the frontend
 
 ---
 
 ## Key Business Rules (quick reference)
 
 - `community` URL → detect platform at render time: `discord.gg/discord.com` → Discord icon, `t.me/telegram.me` → Telegram icon, `reddit.com` → Reddit icon; fallback to generic link icon
-- Category filter pills filter on `primary_category` array (multi-select, OR logic across selected categories)
+- **Topic nav pills** are sourced dynamically from the `topics` table; only topics present in the loaded data render (empty topics like `Misc` auto-hide). Icons live in a `slug → emoji` map in `CollectionGrid.tsx`. The `/tools/:category` route param resolves against **topic slugs**; a product appears under every topic it belongs to.
+- **Category filter** lists categories from the junction, **scoped to the active topic** (grouped by topic when "All" is selected); it filters by category `slug` to avoid same-named categories across topics colliding.
 - Any filter/search/sort change resets pagination to page 1
-- Grouping by subcategory disables standard pagination (show all results grouped)
 - Default entries per page: 25; options: 25 / 50 / 100
 
 ---
