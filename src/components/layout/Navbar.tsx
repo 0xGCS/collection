@@ -12,10 +12,12 @@ function getInitialTheme(): 'light' | 'dark' {
 const pageNames: Record<string, string> = {
   '/': 'Home',
   '/tools': 'Toooooooooools',
+  '/tools/topics': 'Topics',
   '/twitter': 'Twitter',
 }
 
 function getBreadcrumbPath(pathname: string) {
+  if (pathname === '/tools/topics') return '/tools/topics'
   if (pathname === '/tools' || pathname.startsWith('/tools/')) return '/tools'
   return pathname
 }
@@ -64,6 +66,15 @@ export default function Navbar() {
             className={`text-sm ${breadcrumbPath === '/tools' ? 'text-accent' : 'text-muted-text hover:text-primary-text'}`}
           >
             Toooooooooools
+          </Button>
+        </Link>
+        <Link to="/tools/topics">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`text-sm ${breadcrumbPath === '/tools/topics' ? 'text-accent' : 'text-muted-text hover:text-primary-text'}`}
+          >
+            Topics
           </Button>
         </Link>
         <Link to="/twitter">

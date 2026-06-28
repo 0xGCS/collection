@@ -21,29 +21,8 @@ import {
 import { CollectionLinks } from '@/components/collection/CollectionLinks'
 import { CollectionPriceBadge, CollectionTagList } from '@/components/collection/CollectionBadges'
 import { PRICE_LABELS } from '@/components/collection/badge-utils'
+import { topicIcon } from '@/components/collection/topic-icons'
 import type { CollectionItem, Topic } from '@/components/collection/types'
-
-// ── Topics ─────────────────────────────────────────────────────────────────────
-
-// Icons aren't stored in the DB, so map them by topic slug here (fallback for new topics).
-const TOPIC_ICONS: Record<string, string> = {
-  ai: '🤖',
-  crypto: '₿',
-  design: '🎨',
-  directories: '🗂️',
-  engineering: '⚙️',
-  investing: '📈',
-  learning: '📚',
-  media: '🎬',
-  misc: '🗂️',
-  osint: '🔍',
-  productivity: '⚡',
-  social: '💬',
-}
-
-function topicIcon(slug: string) {
-  return TOPIC_ICONS[slug] ?? '🔖'
-}
 
 const PAGE_SIZES = [25, 50, 100]
 
@@ -190,7 +169,10 @@ function SkeletonCard() {
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function CollectionGrid() {
-  const { category: topicSlugParam } = useParams<{ category?: string }>()
+  const { category: topicSlugParam, categorySlug } = useParams<{
+    category?: string
+    categorySlug?: string
+  }>()
   const navigate = useNavigate()
 
   const [data, setData] = useState<CollectionItem[]>([])
@@ -210,10 +192,17 @@ export default function CollectionGrid() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
 
-  const activeTopic = useMemo(
-    () => topics.find((t) => t.slug === topicSlugParam?.toLowerCase()) ?? null,
-    [topics, topicSlugParam],
-  )
+  // In category mode (/tools/category/:categorySlug) the active topic is derived
+  // from the category's own topic; otherwise it comes from the topic route param.
+  const activeTopic = useMemo(() => {
+    if (categorySlug) {
+      const cat = data
+        .flatMap((item) => item.categories)
+        .find((c) => c.slug === categorySlug.toLowerCase())
+      return cat ? topics.find((t) => t.slug === cat.topicSlug) ?? null : null
+    }
+    return topics.find((t) => t.slug === topicSlugParam?.toLowerCase()) ?? null
+  }, [topics, topicSlugParam, categorySlug, data])
 
   // ── Fetch ────────────────────────────────────────────────────────────────
 
@@ -232,6 +221,18 @@ export default function CollectionGrid() {
       cancelled = true
     }
   }, [])
+
+  // ── Seed the Category filter from the /tools/category/:categorySlug route ──
+  // Adjust state during render (React's endorsed pattern) when the route's
+  // category changes, so the page mirrors a "Category" filter selection while
+  // leaving the user free to change it afterwards.
+  const routeCategorySlug = categorySlug?.toLowerCase() ?? null
+  const [seededCategorySlug, setSeededCategorySlug] = useState<string | null>(null)
+  if (routeCategorySlug !== seededCategorySlug) {
+    setSeededCategorySlug(routeCategorySlug)
+    setSelectedCategories(routeCategorySlug ? [routeCategorySlug] : [])
+    setPage(1)
+  }
 
   // ── Debounced search ───────────────────────────────────────────────────────
 

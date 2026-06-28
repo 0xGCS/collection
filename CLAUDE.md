@@ -75,7 +75,9 @@ src/
 |---|---|---|
 | `/` | `LandingPage` | |
 | `/tools` | `CollectionGrid` | All items, no category filter |
-| `/tools/:category` | `CollectionGrid` | Pre-filtered by category slug (e.g. `/tools/ai`) |
+| `/tools/topics` | `TopicsPage` | Overview of topics → categories with per-category product counts; Cards/Index toggle |
+| `/tools/:category` | `CollectionGrid` | Pre-filtered by **topic** slug (e.g. `/tools/ai`) |
+| `/tools/category/:categorySlug` | `CollectionGrid` | Pre-selects the **Category** filter for that category slug (target of `/tools/topics` links); derives its topic automatically |
 | `/tools/item/:itemId` | `CollectionDetailPage` | `/item/` prefix avoids collision with category slugs |
 | `/twitter` | TwitterPage | Renders "Coming Soon" |
 | `/toooooooooools` → `/tools` | redirect | Legacy link preservation |
