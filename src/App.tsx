@@ -3,6 +3,7 @@ import Navbar from '@/components/layout/Navbar'
 import LandingPage from '@/components/LandingPage'
 import CollectionGrid from '@/components/CollectionGrid'
 import CollectionDetailPage from '@/components/CollectionDetailPage'
+import TopicsPage from '@/components/TopicsPage'
 
 // Redirect legacy detail URLs (/toooooooooools/:itemId) to the new /tools/item/:itemId path.
 function LegacyDetailRedirect() {
@@ -33,7 +34,9 @@ export default function App() {
           <Route path="/toooooooooools/:itemId" element={<LegacyDetailRedirect />} />
           {/* Tools */}
           <Route path="/tools" element={<CollectionGrid />} />
+          <Route path="/tools/topics" element={<TopicsPage />} />
           <Route path="/tools/item/:itemId" element={<CollectionDetailPage />} />
+          <Route path="/tools/category/:categorySlug" element={<CollectionGrid />} />
           <Route path="/tools/:category" element={<CollectionGrid />} />
           <Route path="/twitter" element={<TwitterPage />} />
         </Routes>
