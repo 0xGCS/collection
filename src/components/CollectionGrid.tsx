@@ -131,7 +131,11 @@ function CollectionCard({ item }: { item: CollectionItem }) {
           <h3 className="min-w-0 flex-1 truncate font-bold text-primary-text">{item.name}</h3>
         </div>
 
-        {item.description && <p className="line-clamp-2 text-sm text-muted-text">{item.description}</p>}
+        {(item.short_description || item.description) && (
+          <p className="line-clamp-2 text-sm text-muted-text">
+            {item.short_description || item.description}
+          </p>
+        )}
 
         {item.prices && (
           <div>
