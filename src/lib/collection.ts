@@ -2,7 +2,7 @@ import type { Category, CollectionItem, Topic } from '@/components/collection/ty
 import { supabase } from '@/lib/supabase'
 
 // Nested embed: each collection row carries its product_categories → categories → topics.
-const COLLECTION_SELECT = `*, product_categories ( categories ( id, name, slug, topic_id, topics ( id, name, slug ) ) )`
+const COLLECTION_SELECT = `*, short_description, product_categories ( categories ( id, name, slug, topic_id, topics ( id, name, slug ) ) )`
 
 interface RawTopic {
   id?: string

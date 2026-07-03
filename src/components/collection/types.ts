@@ -21,6 +21,7 @@ export interface CollectionItem {
   id: string
   name: string
   description: string | null
+  short_description: string | null
   url: string | null
   logo: string | null
   twitter: string | null
