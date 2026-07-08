@@ -19,6 +19,7 @@ function createItem(overrides: Partial<CollectionItem> = {}): CollectionItem {
     id: overrides.id ?? 'sample-tool',
     name: overrides.name ?? 'Sample Tool',
     description: overrides.description ?? 'A card item used for navigation testing.',
+    short_description: null,
     url: overrides.url ?? 'https://example.com',
     logo: overrides.logo ?? null,
     twitter: overrides.twitter ?? null,

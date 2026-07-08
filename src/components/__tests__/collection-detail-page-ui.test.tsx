@@ -18,6 +18,7 @@ const sampleItem: CollectionItem = {
   id: 'sample-tool',
   name: 'Sample Tool',
   description: 'A useful detail page example for the collection.',
+  short_description: null,
   url: 'https://example.com',
   logo: 'https://example.com/logo.png',
   twitter: 'https://x.com/sampletool',

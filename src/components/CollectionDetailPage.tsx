@@ -7,6 +7,7 @@ import { CollectionPriceBadge, CollectionTagList } from '@/components/collection
 import { Badge } from '@/components/ui/badge'
 import type { CollectionFeature, CollectionItem } from '@/components/collection/types'
 import * as collectionModule from '@/lib/collection'
+import { slugifyTag } from '@/lib/tags'
 import { formatDate } from '@/lib/utils'
 
 const fetchCollectionItemById = collectionModule.fetchCollectionItemById
@@ -294,13 +295,14 @@ export default function CollectionDetailPage() {
             <SidebarCard label="Tags">
               <div className="flex flex-wrap gap-2">
                 {item.tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="outline"
-                    className="rounded-full border border-blue-500 px-3 py-0.5 text-xs font-medium text-blue-400"
-                  >
-                    {tag}
-                  </Badge>
+                  <Link key={tag} to={`/tags/${slugifyTag(tag)}`}>
+                    <Badge
+                      variant="outline"
+                      className="rounded-full border border-blue-500 px-3 py-0.5 text-xs font-medium text-blue-400 transition-colors hover:bg-blue-500 hover:text-white"
+                    >
+                      {tag}
+                    </Badge>
+                  </Link>
                 ))}
               </div>
             </SidebarCard>
