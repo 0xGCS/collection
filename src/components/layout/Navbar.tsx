@@ -13,12 +13,14 @@ const pageNames: Record<string, string> = {
   '/': 'Home',
   '/tools': 'Toooooooooools',
   '/tools/topics': 'Topics',
+  '/tags': 'Tags',
   '/twitter': 'Twitter',
 }
 
 function getBreadcrumbPath(pathname: string) {
   if (pathname === '/tools/topics') return '/tools/topics'
   if (pathname === '/tools' || pathname.startsWith('/tools/')) return '/tools'
+  if (pathname === '/tags' || pathname.startsWith('/tags/')) return '/tags'
   return pathname
 }
 
@@ -75,6 +77,15 @@ export default function Navbar() {
             className={`text-sm ${breadcrumbPath === '/tools/topics' ? 'text-accent' : 'text-muted-text hover:text-primary-text'}`}
           >
             Topics
+          </Button>
+        </Link>
+        <Link to="/tags">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`text-sm ${breadcrumbPath === '/tags' ? 'text-accent' : 'text-muted-text hover:text-primary-text'}`}
+          >
+            Tags
           </Button>
         </Link>
         <Link to="/twitter">

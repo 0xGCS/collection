@@ -8,6 +8,7 @@ const sampleItem: CollectionItem = {
   id: '1',
   name: 'Example Tool',
   description: 'Example description',
+  short_description: null,
   url: 'https://example.com',
   logo: null,
   twitter: 'https://x.com/exampletool',

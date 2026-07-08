@@ -6,6 +6,7 @@ test('collection types module is importable', () => {
     id: '1',
     name: 'Example',
     description: null,
+    short_description: null,
     url: null,
     logo: null,
     twitter: null,

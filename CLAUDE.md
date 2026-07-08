@@ -79,6 +79,8 @@ src/
 | `/tools/:category` | `CollectionGrid` | Pre-filtered by **topic** slug (e.g. `/tools/ai`) |
 | `/tools/category/:categorySlug` | `CollectionGrid` | Pre-selects the **Category** filter for that category slug (target of `/tools/topics` links); derives its topic automatically |
 | `/tools/item/:itemId` | `CollectionDetailPage` | `/item/` prefix avoids collision with category slugs |
+| `/tags` | `TagsPage` | All tags from `collection.tags` with product counts; Popular/A–Z sort |
+| `/tags/:tagSlug` | `TagDetailPage` | Products matching the tag; unknown slug renders a "Tag not found" state |
 | `/twitter` | TwitterPage | Renders "Coming Soon" |
 | `/toooooooooools` → `/tools` | redirect | Legacy link preservation |
 | `/toooooooooools/:itemId` → `/tools/item/:itemId` | redirect | Legacy detail-link preservation |
@@ -119,7 +121,7 @@ Full token tables are in `PRD.md §10.2`.
 - **RLS:** every frontend-read table (`collection`, `topics`, `categories`, `product_categories`) needs a public `SELECT` policy for the `anon` role. Without it the anon client gets empty data.
 - **Data access:** the frontend reads via `src/lib/collection.ts`, which embeds the junction with a PostgREST nested select (`*, product_categories ( categories ( …, topics (…) ) )`) and `normalizeItem()` flattens it into `item.topics[]` and `item.categories[]` on `CollectionItem`.
 - **Legacy columns:** `collection.primary_category` / `primary_subcategory` (`text[]`) are deprecated — kept until the normalized UI is validated in prod, then dropped (same phased pattern as `features` → `features_v2`). The UI no longer reads them.
-- **Tags:** `collection.tags` (`text[]`) stays on the product — flexible attributes (e.g. `open-source`, `api`, `freemium`).
+- **Tags:** `collection.tags` (`text[]`) stays on the product — flexible attributes (e.g. `open-source`, `api`, `freemium`). Values are lowercase kebab-case slugs; `src/lib/tags.ts` (`slugifyTag`, `formatTagName`, `buildTagSummaries`) derives display names and counts, and powers `/tags` + `/tags/:tagSlug`.
 - **Dead links table:** `public.dead_links` — never write to it from the frontend
 
 ---

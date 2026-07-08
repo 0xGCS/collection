@@ -15,6 +15,7 @@ function createItem(overrides: Partial<CollectionItem>): CollectionItem {
     id: overrides.id ?? crypto.randomUUID(),
     name: overrides.name ?? 'Item',
     description: null,
+    short_description: null,
     url: null,
     logo: null,
     twitter: null,
