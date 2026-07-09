@@ -50,17 +50,22 @@ src/
 ├── components/
 │   ├── ui/                      # shadcn/ui primitives (Button, Badge, Input, etc.)
 │   ├── layout/
-│   │   └── Navbar.tsx           # Top navigation bar with light/dark toggle
+│   │   └── Navbar.tsx           # Top navigation bar with light/dark toggle + UserMenu
+│   ├── auth/
+│   │   └── UserMenu.tsx         # Navbar auth UI: sign-in dropdown / avatar menu
 │   ├── collection/             # Shared collection building blocks
 │   │   ├── types.ts             # CollectionItem type (source of truth)
 │   │   ├── badge-utils.ts       # Price labels/palettes + getBadgePalette()
 │   │   ├── CollectionBadges.tsx # CollectionTagList, CollectionPriceBadge
+│   │   ├── CollectionCard.tsx   # Shared product card (grid + tag pages)
 │   │   └── CollectionLinks.tsx  # Brand/social icon links + community detection
 │   ├── LandingPage.tsx
 │   ├── CollectionGrid.tsx       # Card-grid directory (category pages + filters)
 │   └── CollectionDetailPage.tsx # Two-column item detail page
+├── contexts/
+│   └── AuthContext.tsx          # AuthProvider + useAuth() (session, user, sign-in/out)
 ├── lib/
-│   ├── supabase.ts              # Supabase client initialisation
+│   ├── supabase.ts              # Supabase client initialisation (PKCE auth flow)
 │   ├── collection.ts            # Data fetchers + pickRelatedItems()
 │   └── utils.ts                 # cn() helper and shared utilities
 ├── styles/
@@ -126,6 +131,17 @@ Full token tables are in `PRD.md §10.2`.
 
 ---
 
+## Auth (Supabase Auth, Google + GitHub OAuth)
+
+- **Flow:** PKCE (`flowType: 'pkce'` in `src/lib/supabase.ts`). `detectSessionInUrl` (default) exchanges the `?code=` param on whatever page loads — there is **no `/auth/callback` route**; `redirectTo` is `window.location.origin + window.location.pathname` so users return to the page they signed in from.
+- **State:** `AuthProvider` (`src/contexts/AuthContext.tsx`) wraps the app inside `BrowserRouter`; `useAuth()` exposes `session`, `user`, `loading`, `signInWithGoogle`, `signInWithGithub`, `signOut`. Session comes from a single `onAuthStateChange` subscription — **never `await` supabase calls inside that callback** (it deadlocks).
+- **UI:** `UserMenu` in the navbar — "Sign in" dropdown (Google/GitHub, inline SVG brand icons) when signed out; avatar (from `user_metadata.avatar_url`, initial fallback) with name/email + Sign out when signed in. `user_metadata` is display-only — never use it for authorization (it's user-editable).
+- **Users** are stored automatically in `auth.users` on first sign-in. The same verified email via both providers auto-links into one user.
+- **No `profiles` table yet** — deliberately deferred until ratings/personal-collection features need it (then: `profiles` + signup trigger outside `public` + RLS with `USING`/`WITH CHECK`, backfill from `auth.users`).
+- **Dashboard config** (Supabase → Auth → URL Configuration): Site URL `https://gregscompendium.com/`; redirect allowlist is exactly `https://gregscompendium.com/**` and `http://localhost:5173/**` — the `/**` wildcards are required for the return-to-same-page redirect. Google/GitHub OAuth apps point at the Supabase callback (`https://<ref>.supabase.co/auth/v1/callback`), never at the app domain.
+
+---
+
 ## Key Business Rules (quick reference)
 
 - `community` URL → detect platform at render time: `discord.gg/discord.com` → Discord icon, `t.me/telegram.me` → Telegram icon, `reddit.com` → Reddit icon; fallback to generic link icon
@@ -139,7 +155,7 @@ Full token tables are in `PRD.md §10.2`.
 ## Out of Scope for v1
 
 - Mobile/responsive layout
-- Authentication or user accounts
+- Rating products and saving to a personal collection (auth shipped as their prerequisite — see Auth section)
 - Twitter page (route exists but renders "Coming Soon")
 - The `enrich_collection.py` data enrichment script (pre-existing, not part of the web build)
 - The dead links checker script (scheduled Python script, not part of the web build)
