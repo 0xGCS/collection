@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { Sun, Moon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import UserMenu from '@/components/auth/UserMenu'
 
 function getInitialTheme(): 'light' | 'dark' {
   const stored = localStorage.getItem('theme')
@@ -100,6 +101,7 @@ export default function Navbar() {
         <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-text hover:text-primary-text">
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
+        <UserMenu />
       </div>
     </nav>
   )

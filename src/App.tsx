@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
+import { AuthProvider } from '@/contexts/AuthContext'
 import Navbar from '@/components/layout/Navbar'
 import LandingPage from '@/components/LandingPage'
 import CollectionGrid from '@/components/CollectionGrid'
@@ -27,25 +28,27 @@ function TwitterPage() {
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          {/* Legacy redirects: preserve old /toooooooooools links */}
-          <Route path="/toooooooooools" element={<Navigate to="/tools" replace />} />
-          <Route path="/toooooooooools/:itemId" element={<LegacyDetailRedirect />} />
-          {/* Tools */}
-          <Route path="/tools" element={<CollectionGrid />} />
-          <Route path="/tools/topics" element={<TopicsPage />} />
-          <Route path="/tools/item/:itemId" element={<CollectionDetailPage />} />
-          <Route path="/tools/category/:categorySlug" element={<CollectionGrid />} />
-          <Route path="/tools/:category" element={<CollectionGrid />} />
-          {/* Tags */}
-          <Route path="/tags" element={<TagsPage />} />
-          <Route path="/tags/:tagSlug" element={<TagDetailPage />} />
-          <Route path="/twitter" element={<TwitterPage />} />
-        </Routes>
-      </div>
+      <AuthProvider>
+        <div className="min-h-screen bg-background">
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            {/* Legacy redirects: preserve old /toooooooooools links */}
+            <Route path="/toooooooooools" element={<Navigate to="/tools" replace />} />
+            <Route path="/toooooooooools/:itemId" element={<LegacyDetailRedirect />} />
+            {/* Tools */}
+            <Route path="/tools" element={<CollectionGrid />} />
+            <Route path="/tools/topics" element={<TopicsPage />} />
+            <Route path="/tools/item/:itemId" element={<CollectionDetailPage />} />
+            <Route path="/tools/category/:categorySlug" element={<CollectionGrid />} />
+            <Route path="/tools/:category" element={<CollectionGrid />} />
+            {/* Tags */}
+            <Route path="/tags" element={<TagsPage />} />
+            <Route path="/tags/:tagSlug" element={<TagDetailPage />} />
+            <Route path="/twitter" element={<TwitterPage />} />
+          </Routes>
+        </div>
+      </AuthProvider>
     </BrowserRouter>
   )
 }
