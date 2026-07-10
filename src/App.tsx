@@ -7,6 +7,8 @@ import CollectionDetailPage from '@/components/CollectionDetailPage'
 import TopicsPage from '@/components/TopicsPage'
 import TagsPage from '@/components/TagsPage'
 import TagDetailPage from '@/components/TagDetailPage'
+import PrivacyPolicyPage from '@/components/PrivacyPolicyPage'
+import TermsOfServicePage from '@/components/TermsOfServicePage'
 
 // Redirect legacy detail URLs (/toooooooooools/:itemId) to the new /tools/item/:itemId path.
 function LegacyDetailRedirect() {
@@ -46,6 +48,8 @@ export default function App() {
             <Route path="/tags" element={<TagsPage />} />
             <Route path="/tags/:tagSlug" element={<TagDetailPage />} />
             <Route path="/twitter" element={<TwitterPage />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms" element={<TermsOfServicePage />} />
           </Routes>
         </div>
       </AuthProvider>
