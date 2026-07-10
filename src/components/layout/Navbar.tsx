@@ -16,6 +16,8 @@ const pageNames: Record<string, string> = {
   '/tools/topics': 'Topics',
   '/tags': 'Tags',
   '/twitter': 'Twitter',
+  '/privacy': 'Privacy Policy',
+  '/terms': 'Terms of Service',
 }
 
 function getBreadcrumbPath(pathname: string) {
