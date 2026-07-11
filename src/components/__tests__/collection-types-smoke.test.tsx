@@ -18,7 +18,6 @@ test('collection types module is importable', () => {
     categories: [],
     tags: null,
     prices: null,
-    pricing: null,
     features_v2: null,
     created_at: null,
   }

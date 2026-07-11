@@ -20,7 +20,6 @@ const sampleItem: CollectionItem = {
   categories: [{ id: 'ai-research', name: 'Research', slug: 'ai-research', topicSlug: 'ai', topicName: 'AI' }],
   tags: ['Featured'],
   prices: 'free_trial',
-  pricing: null,
   features_v2: null,
   created_at: '2026-01-01T00:00:00.000Z',
 }
