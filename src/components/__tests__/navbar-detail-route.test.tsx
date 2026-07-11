@@ -4,6 +4,17 @@ import { describe, expect, it, vi } from 'vitest'
 
 import Navbar from '@/components/layout/Navbar'
 
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    session: null,
+    user: null,
+    loading: false,
+    signInWithGoogle: vi.fn(),
+    signInWithGithub: vi.fn(),
+    signOut: vi.fn(),
+  }),
+}))
+
 describe('Navbar detail route breadcrumbs', () => {
   it('shows Home and Toooooooooools when viewing a detail route', () => {
     const matchMediaMock = vi.fn().mockReturnValue({
