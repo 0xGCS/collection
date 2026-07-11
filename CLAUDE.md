@@ -118,7 +118,8 @@ Full token tables are in `PRD.md §10.2`.
 
 ## Supabase Notes
 
-- **Main table:** `public.collection` (~630 rows, read-only from the frontend)
+- **Main table:** `public.collection` (~650 rows, read-only from the frontend)
+- **Column-level grants on `collection`:** `anon`/`authenticated` have `SELECT` on only the columns the UI renders (see `supabase/migrations/20260711120000_restrict_collection_public_columns.sql`). Consequences: `select=*` is rejected by PostgREST, so `COLLECTION_SELECT` in `src/lib/collection.ts` must list columns explicitly and stay in sync with the grant; a new `collection` column is **private by default** until added to both. `primary_category`, `primary_subcategory`, and `pricing` (raw enrichment jsonb) are deliberately not granted.
 - **Taxonomy is normalized** into `product → category → topic`:
   - `public.topics` — broad subject areas (`id, name, slug`). 12 topics.
   - `public.categories` — specific product types (`id, topic_id, name, slug`); each category belongs to exactly one topic. Slugs are topic-prefixed (e.g. `crypto-infrastructure` vs `engineering-infrastructure`) because names repeat across topics.

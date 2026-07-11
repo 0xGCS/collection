@@ -30,7 +30,6 @@ const sampleItem: CollectionItem = {
   categories: [{ id: 'ai-research', name: 'Research', slug: 'ai-research', topicSlug: 'ai', topicName: 'AI' }],
   tags: ['Featured', 'Agents'],
   prices: 'free_trial',
-  pricing: 'Contact sales for enterprise plans.',
   features_v2: [
     { label: 'Massive UI/UX Database', description: 'Access 250,000+ real-world app screens.' },
     { label: 'AI Coding Agent Integration', description: 'Browse UI patterns through MCP.' },

@@ -19,7 +19,6 @@ function createItem(overrides: Partial<CollectionItem>): CollectionItem {
     categories: [],
     tags: null,
     prices: null,
-    pricing: null,
     features_v2: null,
     created_at: null,
     ...overrides,

@@ -2,7 +2,10 @@ import type { Category, CollectionItem, Topic } from '@/components/collection/ty
 import { supabase } from '@/lib/supabase'
 
 // Nested embed: each collection row carries its product_categories → categories → topics.
-const COLLECTION_SELECT = `*, short_description, product_categories ( categories ( id, name, slug, topic_id, topics ( id, name, slug ) ) )`
+// Explicit column list only — the database grants SELECT on exactly these columns
+// (see supabase/migrations/20260711120000_restrict_collection_public_columns.sql),
+// so `*` would be rejected by PostgREST. Keep this list and the grant in sync.
+const COLLECTION_SELECT = `id, name, description, short_description, url, logo, twitter, linkedin, github, youtube, community, tags, prices, features_v2, created_at, product_categories ( categories ( id, name, slug, topic_id, topics ( id, name, slug ) ) )`
 
 interface RawTopic {
   id?: string

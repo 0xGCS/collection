@@ -33,7 +33,6 @@ function createItem(overrides: Partial<CollectionItem> = {}): CollectionItem {
     ],
     tags: overrides.tags ?? ['Featured'],
     prices: overrides.prices ?? 'free',
-    pricing: overrides.pricing ?? null,
     features_v2: overrides.features_v2 ?? null,
     created_at: overrides.created_at ?? '2026-01-01T00:00:00.000Z',
   }
