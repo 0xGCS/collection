@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { pickRelatedItems } from '@/lib/collection'
 import type { Category, CollectionItem, Topic } from '@/components/collection/types'
+
+// pickRelatedItems is pure, but @/lib/collection imports the Supabase client,
+// which requires VITE_SUPABASE_* env vars at module load — stub it out.
+vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 
 function topic(slug: string, name: string): Topic {
   return { slug, name }
