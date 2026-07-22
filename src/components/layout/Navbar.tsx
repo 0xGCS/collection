@@ -10,16 +10,6 @@ function getInitialTheme(): 'light' | 'dark' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
-const pageNames: Record<string, string> = {
-  '/': 'Home',
-  '/tools': 'Toooooooooools',
-  '/tools/topics': 'Topics',
-  '/tags': 'Tags',
-  '/twitter': 'Twitter',
-  '/privacy': 'Privacy Policy',
-  '/terms': 'Terms of Service',
-}
-
 function getBreadcrumbPath(pathname: string) {
   if (pathname === '/tools/topics') return '/tools/topics'
   if (pathname === '/tools' || pathname.startsWith('/tools/')) return '/tools'
@@ -46,22 +36,12 @@ export default function Navbar() {
   }
 
   const breadcrumbPath = getBreadcrumbPath(location.pathname)
-  const currentPage = pageNames[breadcrumbPath] ?? 'Home'
-  const isHome = breadcrumbPath === '/'
 
   return (
     <nav className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-nav-border bg-card-bg px-6">
-      <div className="flex items-center gap-1 text-sm">
-        <Link to="/" className="text-muted-text hover:text-accent transition-colors">
-          Home
-        </Link>
-        {!isHome && (
-          <>
-            <span className="text-muted-text">/</span>
-            <span className="font-medium text-primary-text">{currentPage}</span>
-          </>
-        )}
-      </div>
+      <Link to="/" aria-label="Home" className="flex shrink-0 items-center">
+        <img src="/logo.svg" alt="" className="h-7 w-7 shrink-0" />
+      </Link>
 
       <div className="flex items-center gap-2">
         <Link to="/tools">
